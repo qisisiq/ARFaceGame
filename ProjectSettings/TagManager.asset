@@ -8,6 +8,7 @@ TagManager:
   - EyeLeft
   - EyeRight
   - Mouth
+  - Debug
   layers:
   - Default
   - TransparentFX

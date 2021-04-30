@@ -18,7 +18,7 @@ public class FaceGameManager : MonoBehaviour
 
     private List<TargetSpawnInfo> m_SpawnInfo;
     private int m_TargetCounter = 0;
-    private float m_BPS;
+    private float m_BeatLength;
 
     private static FaceGameManager s_Instance;
     public static FaceGameManager Instance 
@@ -61,7 +61,7 @@ public class FaceGameManager : MonoBehaviour
         var reorderedList = m_SongData.m_SpawnInformation.OrderBy(x => x.beat);
         m_SpawnInfo = reorderedList.ToList();
         
-        m_BPS = m_SongData.m_BPM / 60f;
+        m_BeatLength = 60f/m_SongData.m_BPM;
 
         m_AudioSource.clip = m_SongData.m_Song;
         m_AudioSource.time = m_SongData.m_StartTime;
@@ -90,13 +90,20 @@ public class FaceGameManager : MonoBehaviour
                 EndGame();
             }
 
-            var spawnInfo = m_SpawnInfo[m_TargetCounter];
-            
-            float currentBeatTime = m_SongData.m_StartTime + (spawnInfo.beat * m_BPS);
-            if (m_AudioSource.time > currentBeatTime)
+            if (m_TargetCounter != -1)
             {
-                Instantiate(spawnInfo.prefab, spawnInfo.transform);
-                m_TargetCounter++;
+                var spawnInfo = m_SpawnInfo[m_TargetCounter];
+            
+                float currentBeatTime = m_SongData.m_StartTime + m_SongData.m_StartOffset + (spawnInfo.beat * m_BeatLength);
+                if (m_AudioSource.time > currentBeatTime)
+                {
+                    Instantiate(spawnInfo.prefab, spawnInfo.transform);
+                    m_TargetCounter++;
+                    if (m_TargetCounter > m_SpawnInfo.Count - 1)
+                    {
+                        m_TargetCounter = -1;
+                    }
+                }
             }
         }
     }

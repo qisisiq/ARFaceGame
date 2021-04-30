@@ -69,20 +69,12 @@ public class FaceColliderManager : MonoBehaviour
         {
             m_EyeLeftCollider = Instantiate(m_ColliderPrefab, m_Face.leftEye);
             m_EyeLeftCollider.tag = "EyeLeft";
-            foreach (Transform t in m_EyeLeftCollider.transform)
-            {
-                t.gameObject.tag = "EyeLeft";
-            }
             m_EyeLeftCollider.SetActive(false);
         }
         if (m_Face.rightEye != null && m_EyeRightCollider == null)
         {
             m_EyeRightCollider = Instantiate(m_ColliderPrefab, m_Face.rightEye);
             m_EyeLeftCollider.tag = "EyeRight";
-            foreach (Transform t in m_EyeRightCollider.transform)
-            {
-                t.gameObject.tag = "EyeRight";
-            }
             m_EyeRightCollider.SetActive(false);
         }
     }
