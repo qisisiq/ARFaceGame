@@ -87,8 +87,7 @@ public class FaceColliderManager : MonoBehaviour
             {
                 if (m_BlendShapeCache.TryGetValue(featureCoefficient.blendShapeLocation, out float coefficient))
                 {
-                    //Coefficient = coefficient;
-                    //m_BlendShapeValues[featureCoefficient.blendShapeLocation.ToString()] = coefficient;
+                    m_BlendShapeValues[featureCoefficient.blendShapeLocation.ToString()] = coefficient;
                     Debug.Log(featureCoefficient.blendShapeLocation.ToString() + " " + coefficient);
                     m_BlendShapeCache[featureCoefficient.blendShapeLocation] = featureCoefficient.coefficient;
                 }
@@ -112,7 +111,7 @@ public class FaceColliderManager : MonoBehaviour
         var faceManager = FindObjectOfType<ARFaceManager>();
         if (faceManager != null && faceManager.subsystem != null && faceManager.descriptor.supportsEyeTracking)
         {
-            //m_FaceSubsystem = (XRFaceSubsystem)faceManager.subsystem;
+            //m_FaceSubsystem = (ARKitFaceSubsystem)faceManager.subsystem;
             SetVisible((m_Face.trackingState == TrackingState.Tracking) && (ARSession.state > ARSessionState.Ready));
             m_Face.updated += OnUpdated;
         }

@@ -13,9 +13,6 @@ public class FaceGameDataManager : MonoBehaviour
         if (s_DataManager == null)
         {
             s_DataManager = this;
-            DontDestroyOnLoad(gameObject);
-            
-            
         }
         else
         {

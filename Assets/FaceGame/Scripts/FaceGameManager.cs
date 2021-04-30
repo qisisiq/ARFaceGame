@@ -3,16 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class FaceGameManager : MonoBehaviour
 {
     [SerializeField] private FaceGameSongData m_Song1;
     [SerializeField] private FaceGameSongData m_Song2;
 
-    [SerializeField] private List<Transform> m_SpawnPoints;
-    
-    [HideInInspector] public float m_Score;
-    private float m_CurrentGameStartTime;
+    [HideInInspector] public int m_Score;
     private FaceGameSongData m_SongData;
     private AudioSource m_AudioSource;
 
@@ -31,6 +29,10 @@ public class FaceGameManager : MonoBehaviour
     [SerializeField] private GameObject m_LeftWinkTarget;
     [SerializeField] private GameObject m_RightWinkTarget;
 
+    [SerializeField] private GameObject m_EndGameScreen;
+    [SerializeField] private Text m_ScoreText;
+
+
 
     void Awake()
     {
@@ -41,21 +43,14 @@ public class FaceGameManager : MonoBehaviour
         }
 
         s_Instance = this;
-        DontDestroyOnLoad(this.gameObject);
 
         m_AudioSource = this.gameObject.GetComponent<AudioSource>();
-    }
-
-    void RestartGame()
-    {
-        
     }
 
     public void StartGame(FaceGameSongData song)
     {
         m_Score = 0;
         m_TargetCounter = 0;
-        m_CurrentGameStartTime = Time.time;
         m_SongData = song;
         
         var reorderedList = m_SongData.m_SpawnInformation.OrderBy(x => x.beat);
@@ -70,14 +65,21 @@ public class FaceGameManager : MonoBehaviour
         Debug.Log("Starting game: " + song.name);
     }
 
+    public void IncreaseScore()
+    {
+        m_Score++;
+    }
+
     void EndGame()
     {
+        var score = (m_Score / m_SpawnInfo.Count) * 100;
+        m_ScoreText.text = score.ToString();
         DisplayEndGameMenu();
     }
 
     void DisplayEndGameMenu()
     {
-        
+        m_EndGameScreen.gameObject.SetActive(true);
     }
 
     void Update()
@@ -94,7 +96,7 @@ public class FaceGameManager : MonoBehaviour
             {
                 var spawnInfo = m_SpawnInfo[m_TargetCounter];
             
-                float currentBeatTime = m_SongData.m_StartTime + m_SongData.m_StartOffset + (spawnInfo.beat * m_BeatLength);
+                float currentBeatTime = m_SongData.m_StartTime + m_SongData.m_StartOffset + (spawnInfo.beat * m_BeatLength) - 1.50f;
                 if (m_AudioSource.time > currentBeatTime)
                 {
                     Instantiate(spawnInfo.prefab, spawnInfo.transform);

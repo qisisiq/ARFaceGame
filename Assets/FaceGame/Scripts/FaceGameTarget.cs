@@ -27,7 +27,7 @@ public class FaceGameTarget : MonoBehaviour
 
     private void Update()
     {
-        if ((Time.time - m_StartTime) > 1)
+        if ((Time.time - m_StartTime) > 1.5)
         {
             TargetMiss();
         }
@@ -35,15 +35,17 @@ public class FaceGameTarget : MonoBehaviour
 
     private void TargetHit()
     {
-        float hitTime = Time.time;
-        float points = hitTime - Time.time;
 
-        FaceGameManager.Instance.m_Score += points;
+        FaceGameManager.Instance.IncreaseScore();
         
         m_ParticleOnHit.gameObject.SetActive(true);
         m_ParticleOnHit.Play();
-        m_ParticleOnMiss.gameObject.SetActive(false);
-        m_ParticleMiddle.gameObject.SetActive(false);
+        Destroy(m_ParticleOnMiss);
+        Destroy(m_ParticleMiddle);
+        //m_ParticleOnMiss.Stop();
+        //m_ParticleMiddle.Stop();
+        //m_ParticleOnMiss.gameObject.SetActive(false);
+        //m_ParticleMiddle.gameObject.SetActive(false);
         
         StartCoroutine(WaitAndDelete(1.0f));
     }
@@ -63,18 +65,26 @@ public class FaceGameTarget : MonoBehaviour
     
     private void OnTriggerEnter(Collider other)
     {
-        if (this.tag == "Nose")
+        
+        if (this.tag == other.tag) {
+            TargetHit();
+        }
+
+        /*
+                 if (this.tag == "Nose")
         {
             if (other.tag == "Nose")
             {
                 TargetHit();
             }
         }
-        if ((other.tag == this.gameObject.tag) && 
-            (FaceColliderManager.Instance.m_BlendShapeCache[m_BlendShapeType] > 0.5f))
+        float blendValue = FaceColliderManager.Instance.m_BlendShapeValues[m_BlendShapeType.ToString()];
+        Debug.Log(m_BlendShapeType.ToString() + " : "+ blendValue);
+
+        if ((other.tag == this.gameObject.tag) && blendValue > 0.5f)
         {
             TargetHit();
-        }
+        }*/
     }
     
     
