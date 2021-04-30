@@ -85,31 +85,6 @@ public class FaceColliderManager : MonoBehaviour
             }
             m_EyeRightCollider.SetActive(false);
         }
-
-        /*
-        // Calculating the offset to approximate where to put the nose and mouth
-        var eyeDist = Vector3.Distance(m_Face.leftEye.position, m_Face.rightEye.position);
-        var noseOffset = new Vector3 (eyeDist * 0.5f, -eyeDist * 0.66f, -eyeDist * 0.33f);
-        noseOffset = noseOffset * 0.3f;
-        var mouthOffset = new Vector3 (eyeDist * 0.5f, -eyeDist * 1.33f, 0);
-        mouthOffset = mouthOffset * 0.3f;
-
-        
-        if (m_MouthCollider == null)
-        {
-            m_MouthCollider = Instantiate(m_ColliderPrefab, m_Face.rightEye);
-            m_MouthCollider.transform.position = mouthOffset;
-            m_MouthCollider.tag = "Mouth";
-            m_MouthCollider.SetActive(false);
-        }
-        
-        if (m_NoseCollider == null)
-        {
-            m_NoseCollider = Instantiate(m_ColliderPrefab, m_Face.rightEye);
-            m_NoseCollider.transform.position = noseOffset;
-            m_NoseCollider.tag = "Nose";
-            m_NoseCollider.SetActive(false);
-        }*/
     }
 
     void UpdateBlendShapeValues()

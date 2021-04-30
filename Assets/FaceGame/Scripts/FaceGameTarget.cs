@@ -63,6 +63,13 @@ public class FaceGameTarget : MonoBehaviour
     
     private void OnTriggerEnter2D(Collider2D other)
     {
+        if (this.tag == "Nose")
+        {
+            if (other.tag == "Nose")
+            {
+                TargetHit();
+            }
+        }
         if ((other.tag == this.gameObject.tag) && 
             (FaceColliderManager.Instance.m_BlendShapeCache[m_BlendShapeType] > 0.5f))
         {

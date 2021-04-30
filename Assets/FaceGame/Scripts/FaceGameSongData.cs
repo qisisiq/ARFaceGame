@@ -8,7 +8,14 @@ public class FaceGameSongData : MonoBehaviour
     [SerializeField] public int m_BPM;
     [SerializeField] public float m_StartTime;
     [SerializeField] public float m_EndTime;
-    [SerializeField] public List<Vector2> m_Positions;
-    [SerializeField] public List<string> m_IconTypes;
-    [SerializeField] public List<float> m_IconTimes;
+    [SerializeField] public float m_StartOffset;
+    [SerializeField] public List<TargetSpawnInfo> m_SpawnInformation;
+}
+
+[System.Serializable]
+public struct TargetSpawnInfo
+{
+    public Transform transform;
+    public GameObject prefab;
+    public float beat;
 }
