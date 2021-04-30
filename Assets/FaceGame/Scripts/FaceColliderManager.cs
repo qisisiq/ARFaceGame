@@ -1,7 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Collections;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
+using UnityEngine.XR.ARKit;
 using UnityEngine.XR.ARSubsystems;
 #if UNITY_IOS && !UNITY_EDITOR
 using UnityEngine.XR.ARKit;
@@ -14,38 +16,77 @@ using UnityEngine.XR.ARKit;
 [RequireComponent(typeof(ARFace))]
 public class FaceColliderManager : MonoBehaviour
 {
-    private GameObject m_eyeLeftCollider;
-    private GameObject m_eyeRightCollider;
-    private GameObject m_mouthCollider;
-    private GameObject m_noseCollider;
-
+    private static FaceColliderManager s_Instance;
+    public static FaceColliderManager Instance 
+    { 
+        get { return s_Instance; } 
+    } 
+    
     [SerializeField] 
-    private GameObject m_colliderPrefab;
-
+    private GameObject m_ColliderPrefab;
+    
+    [SerializeField] private ARKitBlendShapeLocation m_EyeBlinkLeft = ARKitBlendShapeLocation.EyeBlinkLeft;
+    [SerializeField] private ARKitBlendShapeLocation m_EyeBlinkRight = ARKitBlendShapeLocation.EyeBlinkRight;
+    [SerializeField] private ARKitBlendShapeLocation m_TongueOut = ARKitBlendShapeLocation.TongueOut;
+    
+    [HideInInspector] public Dictionary<ARKitBlendShapeLocation, float> m_BlendShapeCache;
+    [HideInInspector] public Dictionary<string, float> m_BlendShapeValues;
+    
     ARFace m_Face;
-    XRFaceSubsystem m_FaceSubsystem;
+    ARKitFaceSubsystem m_FaceSubsystem;
 
+    [SerializeField] private GameObject m_MouthCollider;
+    [SerializeField] private GameObject m_NoseCollider;
+    // These two are created in script using the values from ARKit 
+    private GameObject m_EyeLeftCollider;
+    private GameObject m_EyeRightCollider;
      
     void Awake()
     {
+        if (s_Instance != null && s_Instance != this) 
+        { 
+            Destroy(this.gameObject);
+            return;
+        }
+
+        s_Instance = this;
+        
         m_Face = GetComponent<ARFace>();
+        m_BlendShapeValues = new Dictionary<string, float>();
+        m_BlendShapeValues.Add("EyeBlinkLeft", 0);
+        m_BlendShapeValues.Add("EyeBlinkRight", 0);
+        m_BlendShapeValues.Add("TongueOut", 0);
+        
+        m_BlendShapeCache = new Dictionary<ARKitBlendShapeLocation, float>();
+        m_BlendShapeCache.Add(m_EyeBlinkLeft, 0);
+        m_BlendShapeCache.Add(m_EyeBlinkRight, 0);
+        m_BlendShapeCache.Add(m_TongueOut, 0);
     }
     
     void CreateGameObjectsIfNecessary()
     {
-        if (m_Face.leftEye != null && m_eyeLeftCollider == null )
+        if (m_Face.leftEye != null && m_EyeLeftCollider == null )
         {
-            m_eyeLeftCollider = Instantiate(m_colliderPrefab, m_Face.leftEye);
-            m_eyeLeftCollider.tag = "EyeLeft";
-            m_eyeLeftCollider.SetActive(false);
+            m_EyeLeftCollider = Instantiate(m_ColliderPrefab, m_Face.leftEye);
+            m_EyeLeftCollider.tag = "EyeLeft";
+            foreach (Transform t in m_EyeLeftCollider.transform)
+            {
+                t.gameObject.tag = "EyeLeft";
+            }
+            m_EyeLeftCollider.SetActive(false);
         }
-        if (m_Face.rightEye != null && m_eyeRightCollider == null)
+        if (m_Face.rightEye != null && m_EyeRightCollider == null)
         {
-            m_eyeRightCollider = Instantiate(m_colliderPrefab, m_Face.rightEye);
-            m_eyeLeftCollider.tag = "EyeRight";
-            m_eyeRightCollider.SetActive(false);
+            m_EyeRightCollider = Instantiate(m_ColliderPrefab, m_Face.rightEye);
+            m_EyeLeftCollider.tag = "EyeRight";
+            foreach (Transform t in m_EyeRightCollider.transform)
+            {
+                t.gameObject.tag = "EyeRight";
+            }
+            m_EyeRightCollider.SetActive(false);
         }
 
+        /*
         // Calculating the offset to approximate where to put the nose and mouth
         var eyeDist = Vector3.Distance(m_Face.leftEye.position, m_Face.rightEye.position);
         var noseOffset = new Vector3 (eyeDist * 0.5f, -eyeDist * 0.66f, -eyeDist * 0.33f);
@@ -54,31 +95,48 @@ public class FaceColliderManager : MonoBehaviour
         mouthOffset = mouthOffset * 0.3f;
 
         
-        if (m_mouthCollider == null)
+        if (m_MouthCollider == null)
         {
-            m_mouthCollider = Instantiate(m_colliderPrefab, m_Face.rightEye);
-            m_mouthCollider.transform.position = mouthOffset;
-            m_mouthCollider.tag = "Mouth";
-            m_mouthCollider.SetActive(false);
+            m_MouthCollider = Instantiate(m_ColliderPrefab, m_Face.rightEye);
+            m_MouthCollider.transform.position = mouthOffset;
+            m_MouthCollider.tag = "Mouth";
+            m_MouthCollider.SetActive(false);
         }
         
-        if (m_noseCollider == null)
+        if (m_NoseCollider == null)
         {
-            m_noseCollider = Instantiate(m_colliderPrefab, m_Face.rightEye);
-            m_noseCollider.transform.position = noseOffset;
-            m_noseCollider.tag = "Nose";
-            m_noseCollider.SetActive(false);
+            m_NoseCollider = Instantiate(m_ColliderPrefab, m_Face.rightEye);
+            m_NoseCollider.transform.position = noseOffset;
+            m_NoseCollider.tag = "Nose";
+            m_NoseCollider.SetActive(false);
+        }*/
+    }
+
+    void UpdateBlendShapeValues()
+    {
+        using (var blendShapes = m_FaceSubsystem.GetBlendShapeCoefficients(m_Face.trackableId, Allocator.Temp))
+        {
+            foreach (var featureCoefficient in blendShapes)
+            {
+                if (m_BlendShapeCache.TryGetValue(featureCoefficient.blendShapeLocation, out float coefficient))
+                {
+                    //Coefficient = coefficient;
+                    //m_BlendShapeValues[featureCoefficient.blendShapeLocation.ToString()] = coefficient;
+                    Debug.Log(featureCoefficient.blendShapeLocation.ToString() + " " + coefficient);
+                    m_BlendShapeCache[featureCoefficient.blendShapeLocation] = featureCoefficient.coefficient;
+                }
+            }
         }
     }
     
     void SetVisible(bool visible)
     {
-        if (m_eyeLeftCollider != null && m_eyeRightCollider != null && m_mouthCollider != null && m_noseCollider != null)
+        if (m_EyeLeftCollider != null && m_EyeRightCollider != null && m_MouthCollider != null && m_NoseCollider != null)
         {
-            m_eyeLeftCollider.SetActive(visible);
-            m_eyeRightCollider.SetActive(visible);
-            m_mouthCollider.SetActive(visible);
-            m_noseCollider.SetActive(visible);
+            m_EyeLeftCollider.SetActive(visible);
+            m_EyeRightCollider.SetActive(visible);
+            m_MouthCollider.SetActive(visible);
+            m_NoseCollider.SetActive(visible);
         }
     }
     
@@ -87,7 +145,7 @@ public class FaceColliderManager : MonoBehaviour
         var faceManager = FindObjectOfType<ARFaceManager>();
         if (faceManager != null && faceManager.subsystem != null && faceManager.descriptor.supportsEyeTracking)
         {
-            m_FaceSubsystem = (XRFaceSubsystem)faceManager.subsystem;
+            //m_FaceSubsystem = (XRFaceSubsystem)faceManager.subsystem;
             SetVisible((m_Face.trackingState == TrackingState.Tracking) && (ARSession.state > ARSessionState.Ready));
             m_Face.updated += OnUpdated;
         }
@@ -96,22 +154,6 @@ public class FaceColliderManager : MonoBehaviour
             enabled = false;
         }
     }
-
-    /*
-    void Start()
-    {
-        if(m_colliderPrefab != null){
-            m_eyeLeftCollider = Instantiate(m_colliderPrefab, m_Face.leftEye);
-            m_eyeLeftCollider.tag = "EyeLeft";
-            m_eyeRightCollider = Instantiate(m_colliderPrefab, m_Face.rightEye);
-            m_eyeRightCollider.tag = "EyeRight";
-            m_mouthCollider = Instantiate(m_colliderPrefab);
-            m_mouthCollider.tag = "Mouth";
-            m_noseCollider = Instantiate(m_colliderPrefab);
-            m_noseCollider.tag = "Nose";
-        }
-    }*/
-    
     
     void OnDisable()
     {
